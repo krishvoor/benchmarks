@@ -38,10 +38,22 @@ function download_kb() {
     curl -L https://github.com/cloud-bulldozer/kube-burner/releases/download/v${KUBE_BURNER_RELEASE}/kube-burner-${KUBE_BURNER_RELEASE}-Linux-x86_64.tar.gz -o kube-burner.tar.gz
     mkdir -p ${TEMP_DIR}/bin
     sudo tar -xvzf kube-burner.tar.gz -C ${TEMP_DIR}/bin/
+    popd
 }
 
-function git_clone() {
-
+function submodule_update() {
     # Running the workload
-    echo "Here's the Benchmark UUID: ${UUID}"
+    pushd "${CURRENT_DIR}" > /dev/null
+    git submodule init
+    git submodule update
+    popd
+}
+
+function start_and_rollout_tweaks() {
+    # Function to edit CPU/ Memory SPECS for respective services/deployments
+    
+}
+
+function deploy_the_load() {
+
 }
