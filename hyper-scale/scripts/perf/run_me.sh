@@ -6,7 +6,7 @@
 # Variables declared in this file
 CURRENT_DIR="$(dirname "$(realpath "$0")")"
 TEMP_DIR=$(mktemp -d)
-pushd "$TEMP_DIR" > /dev/null
+pushd "${CURRENT_DIR}" > /dev/null
 
 # Create(s) the results directory
 RESULTS_DIR_PATH=result
@@ -43,7 +43,26 @@ function write_to_csv() {
 
 function deploy_the_load() {
     # Deploy the load via kube-burner P75 Load
+
+    oc project <HCP_NAMESPACE>
+
+    echo "################################################################################"
+    echo "Patching ${SERVICE_NAME}'s CPU"
+    echo "################################################################################"
+
+    oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"${CPU_REQUESTS}m"}}}]}}}}'
+    oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> <DEPLOYMENTS.APPS>
+
+    echo "################################################################################"
+    echo "Patching ${SERVICE_NAME}'s Memory"
+    echo "################################################################################"
+
+    oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"memory":"${MEMORY_REQUESTS}M"}}}]}}}}'
+    oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> <DEPLOYMENTS.APPS>
+
     echo "################################################################################"
     echo " Deploying the P75 Workloads with ${CPU_REQUESTS} & ${MEMORY_REQUESTS}"
     echo "################################################################################"
+    pushd e2e-benchmarking/workloads/kube-burner/ > /dev/null
+    WORKLOAD=cluster-density-ms ./run.sh
 }
