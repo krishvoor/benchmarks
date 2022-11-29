@@ -15,10 +15,10 @@ RESULTS_DIR_ROOT=${RESULTS_DIR_PATH}/hyperscale-$(date +%Y%m%d%H%M)
 
 
 # Variables declared are read from krishvoor/kruize-demos/hpo_helpers/*script.sh
-CPU_REQUESTS= <UPDATE_ME>
-MEMORY_REQUESTS= <UPDATE_ME>
+CPU_REQUESTS= $3
+MEMORY_REQUESTS= $4
 ### Kubernetes object 
-SERVICE_NAME= <UPDATE_ME>
+#SERVICE_NAME= <UPDATE_ME>
 
 # Describes usage of the script
 function usuage() {
@@ -53,6 +53,8 @@ function write_to_csv() {
 
     # Merge the files
     paste ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log > ${RESULTS_DIR_ROOT}/output.csv
+
+    # Add metrics for kube-api metrics
 }
 
 function deploy_the_load() {
