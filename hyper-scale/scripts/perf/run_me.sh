@@ -38,7 +38,21 @@ function write_to_csv() {
     echo "################################################################################"
     echo "Writing to csv file"
     echo "################################################################################"
-  
+    
+    ## Capture CURL Commands for CPU Lim, CPU Usuage
+    echo "CPU_LIM ,  CPU_USAGE" > ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log
+    ## curl "{URL}" >> ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log
+   
+    #-------------------------------------------------#
+    ## Capture CURL Commands for Mem Lim, Mem Usuage
+    echo "MEM_LIM ,  MEM_RSS , MEM_USAGE" > ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log
+    ## curl "{URL}" >> ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log
+    
+    # Display the Metrics log file
+    paste ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log
+
+    # Merge the files
+    paste ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log > ${RESULTS_DIR_ROOT}/output.csv
 }
 
 function deploy_the_load() {
@@ -65,4 +79,5 @@ function deploy_the_load() {
     echo "################################################################################"
     pushd e2e-benchmarking/workloads/kube-burner/ > /dev/null
     WORKLOAD=cluster-density-ms ./run.sh
+    write_to_csv
 }
