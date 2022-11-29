@@ -19,12 +19,11 @@
 
 # checks if the previous command is executed successfully
 # input:Return value of previous command
-# output:Prompts the error message if the return value is not zero 
-function err_exit() 
-{
+# output:Prompts the error message if the return value is not zero
+function err_exit() {
 	if [ $? != 0 ]; then
 		printf "$*"
-		echo 
+		echo
 		exit -1
 	fi
 }
@@ -32,8 +31,7 @@ function err_exit()
 # Get the memory details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the memory information for pod through prometheus query and store it in json file
-function get_pod_mem_rss()
-{
+function get_pod_mem_rss() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -41,12 +39,11 @@ function get_pod_mem_rss()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	echo "APP_NAME is ..." ${APP_NAME} >> setup.log
-	rm -rf ${RESULTS_DIR}/${node}_mem-${ITER}.json
-	while true
-	do
-		# Processing curl output "timestamp value" using jq tool. 
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_rss{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_mem-${ITER}.json
+	echo "APP_NAME is ..." ${APP_NAME} >>setup.log
+	rm -rf ${RESULTS_DIR}/mem-${ITER}.json
+	while true; do
+		# Processing curl output "timestamp value" using jq tool.
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_rss{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/mem-${ITER}.json
 		err_exit "Error: could not get memory details of the pod" >>setup.log
 	done
 }
@@ -54,8 +51,7 @@ function get_pod_mem_rss()
 # Get the memory usage details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the memory usage information for pod through prometheus query and store it in json file
-function get_pod_mem_usage()
-{
+function get_pod_mem_usage() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -63,11 +59,10 @@ function get_pod_mem_usage()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_memusage-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/memusage-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_working_set_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_memusage-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_working_set_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/memusage-${ITER}.json
 		err_exit "Error: could not get memory usage details of pod" >>setup.log
 	done
 }
@@ -75,8 +70,7 @@ function get_pod_mem_usage()
 # Get the memory request details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the memory request information for pod through prometheus query and store it in json file
-function get_pod_mem_requests()
-{
+function get_pod_mem_requests() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -84,11 +78,10 @@ function get_pod_mem_requests()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_memrequests-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/memrequests-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_memrequests-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/memrequests-${ITER}.json
 		err_exit "Error: could not get memory request details of pod" >>setup.log
 	done
 }
@@ -96,8 +89,7 @@ function get_pod_mem_requests()
 # Get the memory usage details for pod in percentage
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the memory usage information in percentage through prometheus query and store it in json file
-function get_pod_mem_requests_in_p()
-{
+function get_pod_mem_requests_in_p() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -105,11 +97,10 @@ function get_pod_mem_requests_in_p()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_memreq_in_p-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/memreq_in_p-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_working_set_bytes{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_requests_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_memreq_in_p-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_working_set_bytes{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_requests_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/memreq_in_p-${ITER}.json
 		err_exit "Error: could not get memory request details of pod in percentage" >>setup.log
 	done
 }
@@ -117,8 +108,7 @@ function get_pod_mem_requests_in_p()
 # Get the memory limit details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the memory limit information for pod through prometheus query and store it in json file
-function get_pod_mem_limits()
-{
+function get_pod_mem_limits() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -126,11 +116,10 @@ function get_pod_mem_limits()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_memlimits-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/memlimits-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_memlimits-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/memlimits-${ITER}.json
 		err_exit "Error: could not get memory limit details of pod" >>setup.log
 	done
 }
@@ -138,8 +127,7 @@ function get_pod_mem_limits()
 # Get the memory limit details for pod in percentage
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the memory percentage information in percentage through prometheus query and store it in json file
-function get_pod_mem_limits_in_p()
-{
+function get_pod_mem_limits_in_p() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -147,11 +135,10 @@ function get_pod_mem_limits_in_p()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_memlimit_in_p-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/memlimit_in_p-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_working_set_bytes{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_limits_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_memlimit_in_p-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_memory_working_set_bytes{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_limits_memory_bytes{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/memlimit_in_p-${ITER}.json
 		err_exit "Error: could not get memory limit details of pod in percentage" >>setup.log
 	done
 }
@@ -159,8 +146,7 @@ function get_pod_mem_limits_in_p()
 # Get the cpu usage details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the cpu usage information for pod through prometheus query and store it in json file
-function get_pod_cpu_usage()
-{
+function get_pod_cpu_usage() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -168,12 +154,11 @@ function get_pod_cpu_usage()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_cpu-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/cpu-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
 		#Get all pods data from 1 node using single command
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_cpu-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/cpu-${ITER}.json
 		err_exit "Error: could not get CPU usage details of pod" >>setup.log
 	done
 }
@@ -181,8 +166,7 @@ function get_pod_cpu_usage()
 # Get the cpu request details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the cpu request information for pod through prometheus query and store it in json file
-function get_pod_cpu_requests()
-{
+function get_pod_cpu_requests() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -190,12 +174,11 @@ function get_pod_cpu_requests()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_cpurequests-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/cpurequests-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
 		#Get all pods data from 1 node using single command
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_cpurequests-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/cpurequests-${ITER}.json
 		err_exit "Error: could not get CPU request details of pod" >>setup.log
 	done
 }
@@ -203,8 +186,7 @@ function get_pod_cpu_requests()
 # Get the cpu request details for pod in percentage
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the cpu request information in percentage through prometheus query and store it in json file
-function get_pod_cpu_requests_in_p()
-{
+function get_pod_cpu_requests_in_p() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -212,12 +194,11 @@ function get_pod_cpu_requests_in_p()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_cpureq_in_p-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/cpureq_in_p-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
 		#Get all pods data from 1 node using single command
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_requests_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_cpureq_in_p-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_requests_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/cpureq_in_p-${ITER}.json
 		err_exit "Error: could not get CPU request details of pod in percentage" >>setup.log
 	done
 }
@@ -225,8 +206,7 @@ function get_pod_cpu_requests_in_p()
 # Get the cpu limits details for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the cpu limits information for pod through prometheus query and store it in json file
-function get_pod_cpu_limits()
-{
+function get_pod_cpu_limits() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -234,12 +214,11 @@ function get_pod_cpu_limits()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf  ${RESULTS_DIR}/${node}_cpulimits-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/cpulimits-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
 		#Get all pods data from 1 node using single command
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_cpulimits-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/cpulimits-${ITER}.json
 		err_exit "Error: could not get CPU limit details of pod" >>setup.log
 	done
 }
@@ -247,8 +226,7 @@ function get_pod_cpu_limits()
 # Get the cpu limits details for pod in percentage
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the cpu limits information in percentage through prometheus query and store it in json file
-function get_pod_cpu_limits_in_p()
-{
+function get_pod_cpu_limits_in_p() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -256,21 +234,19 @@ function get_pod_cpu_limits_in_p()
 	ITER=$5
 	APP_NAME=$6
 	# Delete the old json file if any
-	rm -rf ${RESULTS_DIR}/${node}_cpulimits_in_p-${ITER}.json
-	while true
-	do
+	rm -rf ${RESULTS_DIR}/cpulimits_in_p-${ITER}.json
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
 		#Get all pods data from 1 node using single command
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_limits_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >> ${RESULTS_DIR}/${node}_cpulimits_in_p-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{node='\"${node}\"'}) by (pod) / sum(kube_pod_container_resource_limits_cpu_cores{node='\"${node}\"'}) by (pod)' ${URL} | jq '[ .data.result[] | [ .value[0], .metric.pod, .value[1]|tostring] | join(";") ]' | grep "${APP_NAME}" >>${RESULTS_DIR}/cpulimits_in_p-${ITER}.json
 		err_exit "Error: could not get CPU limit details of pod in percentage" >>setup.log
 	done
 }
 
-# Get the cluster information for pod 
+# Get the cluster information for pod
 # input:worker node, prometheus url, authorization token, result directory, application name
 # output:generate the cluster information for pod through prometheus query and store it in json file
-function get_cluster_info()
-{
+function get_cluster_info() {
 	node=$1
 	URL=$2
 	TOKEN=$3
@@ -278,31 +254,30 @@ function get_cluster_info()
 	ITER=$5
 	APP_NAME=$6
 	rm -rf ${RESULTS_DIR}/cluster_cpu-${ITER}.json ${RESULTS_DIR}/cluster_mem-${ITER}.json ${RESULTS_DIR}/cluster_cpurequests-${ITER}.json ${RESULTS_DIR}/cluster_cpulimits-${ITER}.json ${RESULTS_DIR}/cluster_memrequests-${ITER}.json ${RESULTS_DIR}/cluster_memlimits-${ITER}.json
-	while true
-	do
+	while true; do
 		# Processing curl output "timestamp value" using jq tool.
 		# Cluster MEm Usage
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=(1-sum(:node_memory_MemAvailable_bytes:sum) / sum(kube_node_status_allocatable_memory_bytes))' ${URL}  | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >> ${RESULTS_DIR}/c_mem-${ITER}.json	
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=(1-sum(:node_memory_MemAvailable_bytes:sum) / sum(kube_node_status_allocatable_memory_bytes))' ${URL} | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >>${RESULTS_DIR}/c_mem-${ITER}.json
 		err_exit "Error: could not get cluster memory usage details" >>setup.log
-		
+
 		# Cluster CPU Usage
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=(1-avg(rate(node_cpu_seconds_total{mode="idle"}[1m])))' ${URL}  | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >> ${RESULTS_DIR}/c_cpu-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=(1-avg(rate(node_cpu_seconds_total{mode="idle"}[1m])))' ${URL} | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >>${RESULTS_DIR}/c_cpu-${ITER}.json
 		err_exit "Error: could not get cluster CPU usage details" >>setup.log
-		
+
 		# CPU Requests COmmited
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_cpu_cores) / sum(kube_node_status_allocatable_cpu_cores)' ${URL}  | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >> ${RESULTS_DIR}/c_cpurequests-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_cpu_cores) / sum(kube_node_status_allocatable_cpu_cores)' ${URL} | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >>${RESULTS_DIR}/c_cpurequests-${ITER}.json
 		err_exit "Error: could not get cluster CPU request details" >>setup.log
-		
+
 		# CPU Limits Commited
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_cpu_cores) / sum(kube_node_status_allocatable_cpu_cores)' ${URL}  | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >> ${RESULTS_DIR}/c_cpulimits-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_cpu_cores) / sum(kube_node_status_allocatable_cpu_cores)' ${URL} | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >>${RESULTS_DIR}/c_cpulimits-${ITER}.json
 		err_exit "Error: could not get cluster CPU limits details" >>setup.log
-		
+
 		# Mem Requests Commited
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_memory_bytes) / sum(kube_node_status_allocatable_memory_bytes)' ${URL}  | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >> ${RESULTS_DIR}/c_memrequests-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_requests_memory_bytes) / sum(kube_node_status_allocatable_memory_bytes)' ${URL} | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >>${RESULTS_DIR}/c_memrequests-${ITER}.json
 		err_exit "Error: could not get cluster memory request details" >>setup.log
-		
+
 		# Mem Limits Commited
-		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_memory_bytes) / sum(kube_node_status_allocatable_memory_bytes)' ${URL}  | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >> ${RESULTS_DIR}/c_memlimits-${ITER}.json
+		curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(kube_pod_container_resource_limits_memory_bytes) / sum(kube_node_status_allocatable_memory_bytes)' ${URL} | jq '[ .data.result[] | [ .value[0]  , .value[1]|tostring ] | join(";") ]' >>${RESULTS_DIR}/c_memlimits-${ITER}.json
 		err_exit "Error: could not get cluster memory limits details" >>setup.log
 	done
 }
@@ -313,11 +288,11 @@ RESULTS_DIR=$3
 mkdir -p ${RESULTS_DIR}
 
 PROMETHEUS_APP=prometheus-k8s-openshift-monitoring.apps
-BENCHMARK_SERVER=$4
 APP_NAME=$5
 
-URL=https://prometheus-k8s-openshift-monitoring.apps.${BENCHMARK_SERVER}/api/v1/query
-TOKEN=`oc whoami --show-token`
+PROM_URL=$(oc get routes -n openshift-monitoring prometheus-k8s -o jsonpath="{.spec.host}")
+URL=https://{PROM_URL}/api/v1/query
+TOKEN=$(oc whoami --show-token)
 
 worker_nodes=($(oc get nodes | grep worker | cut -d " " -f1))
 #Need to export the function to enable timeout
@@ -326,21 +301,18 @@ export -f get_pod_mem_rss get_pod_mem_usage get_pod_mem_requests get_pod_mem_req
 export -f get_pod_cpu_usage get_pod_cpu_requests get_pod_cpu_requests_in_p get_pod_cpu_limits get_pod_cpu_limits_in_p
 export -f get_cluster_info
 
-for i in "${worker_nodes[@]}"
-do
-	echo "Collecting CPU & MEM details of nodes ${i}  and cluster" >> setup.log
-	timeout ${TIMEOUT} bash -c  "get_pod_mem_rss ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_cpu_usage ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_cluster_info ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+echo "Collecting CPU & MEM details of nodes ${i}  and cluster" >>setup.log
+timeout ${TIMEOUT} bash -c "get_pod_mem_rss ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_cpu_usage ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_cluster_info ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
 
-	timeout ${TIMEOUT} bash -c  "get_pod_mem_usage ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_mem_requests ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_mem_requests_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_mem_limits ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_mem_limits_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	
-	timeout ${TIMEOUT} bash -c  "get_pod_cpu_requests ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_cpu_requests_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_cpu_limits ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-	timeout ${TIMEOUT} bash -c  "get_pod_cpu_limits_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
-done
+timeout ${TIMEOUT} bash -c "get_pod_mem_usage ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_mem_requests ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_mem_requests_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_mem_limits ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_mem_limits_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+
+timeout ${TIMEOUT} bash -c "get_pod_cpu_requests ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_cpu_requests_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_cpu_limits ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
+timeout ${TIMEOUT} bash -c "get_pod_cpu_limits_in_p ${i} ${URL} ${TOKEN} ${RESULTS_DIR} ${ITER} ${APP_NAME}" &
