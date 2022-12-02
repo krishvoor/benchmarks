@@ -63,18 +63,18 @@ function deploy_the_load() {
     oc project <HCP_NAMESPACE>
 
     echo "################################################################################"
-    echo "Patching ${SERVICE_NAME}'s CPU"
+    echo "                    Patching ${SERVICE_NAME}'s CPU & Memory                     "
     echo "################################################################################"
 
-    oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"${CPU_REQUESTS}m"}}}]}}}}'
-    oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> <DEPLOYMENTS.APPS>
+    oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
+    oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> kube-apiserver
 
-    echo "################################################################################"
-    echo "Patching ${SERVICE_NAME}'s Memory"
-    echo "################################################################################"
+    #echo "################################################################################"
+    #echo "Patching ${SERVICE_NAME}'s Memory"
+    #echo "################################################################################"
 
-    oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"memory":"${MEMORY_REQUESTS}M"}}}]}}}}'
-    oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> <DEPLOYMENTS.APPS>
+    #oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
+    #oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> <DEPLOYMENTS.APPS>
 
     echo "################################################################################"
     echo " Deploying the P75 Workloads with ${CPU_REQUESTS} & ${MEMORY_REQUESTS}"
