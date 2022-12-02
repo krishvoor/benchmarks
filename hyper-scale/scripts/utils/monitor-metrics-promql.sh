@@ -126,8 +126,8 @@ TOKEN=$(oc whoami --show-token)
 
 export -f err_exit cpu_metrics mem_metrics
 
-echo "start_timestamp,end_timestamp,cpu_request_avg_container,cpu_request_sum_container,cpu_limit_avg_container,cpu_limit_sum_container,cpu_usage_avg_container,cpu_usage_max_container,cpu_usage_min_container,cpu_throttle_avg_container" >${RESULTS_DIR}/cpu_metrics.csv
-echo ",mem_request_avg_container,mem_request_sum_container,mem_limit_avg_container,mem_limit_sum_container,mem_usage_avg_container,mem_usage_max_container,mem_usage_min_container,mem_rss_avg_container,mem_rss_max_container,mem_rss_min_container" >${RESULTS_DIR}/mem_metrics.csv
+echo "start_timestamp,end_timestamp,cpu_request_avg_container,cpu_request_sum_container,cpu_usage_avg_container,cpu_usage_max_container,cpu_usage_min_container,cpu_throttle_avg_container" >${RESULTS_DIR}/cpu_metrics.csv
+echo ",mem_request_avg_container,mem_request_sum_container,mem_usage_avg_container,mem_usage_max_container,mem_usage_min_container,mem_rss_avg_container,mem_rss_max_container,mem_rss_min_container" >${RESULTS_DIR}/mem_metrics.csv
 
 echo "Collecting metric data" >>setup.log
 start_timestamp=$(date)
