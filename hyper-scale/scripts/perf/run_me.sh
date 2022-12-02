@@ -5,20 +5,21 @@
 
 # Variables declared in this file
 CURRENT_DIR="$(dirname "$(realpath "$0")")"
-TEMP_DIR=$(mktemp -d)
 pushd "${CURRENT_DIR}" > /dev/null
+
+# Variables read from krishvoor/kruize-demos/hpo_helpers/*script.sh
+RESULTS_DIR=$1 ## Check whether this is required
+NAMESPACE= $2
+CPU_REQUESTS= $3
+MEMORY_REQUESTS= $4
+SERVICE_NAME= $5
 
 # Create(s) the results directory
 RESULTS_DIR_PATH=result
 rm -rf ${RESULTS_DIR_PATH}/hyperscale-* || true
 RESULTS_DIR_ROOT=${RESULTS_DIR_PATH}/hyperscale-$(date +%Y%m%d%H%M)
-
-
-# Variables declared are read from krishvoor/kruize-demos/hpo_helpers/*script.sh
-CPU_REQUESTS= $3
-MEMORY_REQUESTS= $4
-### Kubernetes object 
-#SERVICE_NAME= <UPDATE_ME>
+mkdir -p ${RESULTS_DIR_ROOT} || true
+mkdir -p ${RESULTS_DIR} || true
 
 # Describes usage of the script
 function usuage() {
@@ -28,58 +29,35 @@ function usuage() {
 	exit -1
 }
 
-function start_and_rollout_tweaks() {
-    # Function to edit CPU/ Memory SPECS for respective services/deployments
-    
-}
+function deploy_me() {
 
-function write_to_csv() {
-    # Write to csv File
-    echo "################################################################################"
-    echo "Writing to csv file"
-    echo "################################################################################"
-    
-    ## Capture CURL Commands for CPU Lim, CPU Usuage
-    echo "CPU_LIM ,  CPU_USAGE" > ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log
-    ## curl "{URL}" >> ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log
-   
-    #-------------------------------------------------#
-    ## Capture CURL Commands for Mem Lim, Mem Usuage
-    echo "MEM_LIM ,  MEM_RSS , MEM_USAGE" > ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log
-    ## curl "{URL}" >> ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log
-    
-    # Display the Metrics log file
-    paste ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log
+    # 1) Deploy the P75 cluster-ms kube-burner load
+    # 2) Run the PromQL Queries against External-Thanos/OCP's Prometheus
 
-    # Merge the files
-    paste ${RESULTS_DIR_ROOT}/Metrics-mem-prom.log ${RESULTS_DIR_ROOT}/Metrics-cpu-prom.log > ${RESULTS_DIR_ROOT}/output.csv
+    oc project ${NAMESPACE}
 
-    # Add metrics for kube-api metrics
-}
-
-function deploy_the_load() {
-    # Deploy the load via kube-burner P75 Load
-
-    oc project <HCP_NAMESPACE>
 
     echo "################################################################################"
     echo "                    Patching ${SERVICE_NAME}'s CPU & Memory                     "
     echo "################################################################################"
 
-    oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
-    oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> kube-apiserver
-
-    #echo "################################################################################"
-    #echo "Patching ${SERVICE_NAME}'s Memory"
-    #echo "################################################################################"
-
-    #oc patch deployment kube-apiserver --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
-    #oc wait --for=condition=Available=true deployments -n <HCP_NAMESPACE> <DEPLOYMENTS.APPS>
+    oc patch deployment ${SERVICE_NAME} --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
+    oc wait --for=condition=Available=true deployments -n ${NAMESPACE} ${SERVICE_NAME}
 
     echo "################################################################################"
     echo " Deploying the P75 Workloads with ${CPU_REQUESTS} & ${MEMORY_REQUESTS}"
     echo "################################################################################"
     pushd e2e-benchmarking/workloads/kube-burner/ > /dev/null
     WORKLOAD=cluster-density-ms ./run.sh
-    write_to_csv
+    popd > /dev/null
+
+    # Run the utils/monitoring_metrics.csv file
+    echo "################################################################################"
+    echo "Writing to csv file"
+    echo "################################################################################"
+    ../utils/monitor-metrics-promql.sh 1 10m ${RESULTS_DIR_ROOT} ${SERVICE_NAME} ${SERVICE_NAME} ${NAMESPACE}
+    # Check this logic
+    cp ../utils/output.csv ${RESULTS_DIR}/output.csv
 }
+
+deploy_me
