@@ -1,4 +1,0 @@
-[submodule "e2e-benchmarking"]
-	path = e2e-benchmarking
-	url = https://github.com/cloud-bulldozer/e2e-benchmarking
-	branch = master
