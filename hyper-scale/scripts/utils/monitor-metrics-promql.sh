@@ -21,7 +21,7 @@ set -ex
 # input:Return value of previous command
 # output:Prompts the error message if the return value is not zero
 
-source ../util/env.sh
+source ../utils/env.sh
 
 function err_exit() {
     if [ $? != 0 ]; then
@@ -63,7 +63,8 @@ function cpu_metrics() {
         cpu_throttle_avg_container=$(curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=avg(rate(container_cpu_cfs_throttled_seconds_total{pod=~"'"${DEPLOYMENT_NAME}-[^-]*-[^-]*$"'", container="'"${CONTAINER_NAME}"'", namespace="'"${NAMESPACE}"'"}['"${INTERVAL}"']))' ${URL} | jq -c '[ .data.result[] | .value[1]] | .[]')
 
         #kube-apiserver latency
-        #apiserver_request_rate=$(curl -- silent -G-kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query= sum(irate(apiserver_request_total{openshift_cluster_name=~"'"${MGMT_CLUSTER_NAME}"'",namespace=~"'"${HOSTED_CLUSTER_NS}"'",verb!="WATCH"}[15m])) by (verb,resource,code) > 0' ${THANOS_URL}
+        apiserver_request_rate=$(curl --silent -G -kH "Authorization: Bearer ${TOKEN}" --data-urlencode 'query=sum(irate(apiserver_request_total{openshift_cluster_name=~"'"${MGMT_CLUSTER_NAME}"'",namespace=~"'"${HOSTED_CLUSTER_NS}"'",verb=~"POST|DELETE|PATCH"}[20m])) by (verb,resource) > 0' ${THANOS_URL} | jq -r [.data.result[0].value[1]][])
+        
         sleep ${INTERVAL}
         end_timestamp=$(date)
         echo "${start_timestamp},${end_timestamp},${cpu_request_avg_container},${cpu_request_sum_container},${cpu_usage_avg_container},${cpu_usage_max_container},${cpu_usage_min_container},${cpu_throttle_avg_container}" >>${RESULTS_DIR}/cpu_metrics.csv

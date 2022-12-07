@@ -1,18 +1,20 @@
 #!/bin/bash
+set -x
 #
 ### Script to perform load test on HyperShift###
 #
 
 # Variables declared in this file
 CURRENT_DIR="$(dirname "$(realpath "$0")")"
-pushd "${CURRENT_DIR}" > /dev/null
+MGMT_CLUSTER_NAME=$(oc get infrastructure cluster -o jsonpath='{.status.infrastructureName}')
+pushd "${CURRENT_DIR}" >/dev/null
 
 # Variables read from krishvoor/kruize-demos/hpo_helpers/*script.sh
 RESULTS_DIR=$1 ## Check whether this is required
-NAMESPACE= $2
-CPU_REQUESTS= $3
-MEMORY_REQUESTS= $4
-SERVICE_NAME= $5
+NAMESPACE=$2
+CPU_REQUESTS=$3
+MEMORY_REQUESTS=$4
+SERVICE_NAME=$5
 
 # Create(s) the results directory
 RESULTS_DIR_PATH=result
@@ -24,9 +26,9 @@ mkdir -p ${RESULTS_DIR} || true
 # Describes usage of the script
 function usuage() {
     # Update the echo statement
-	echo
-	echo "Usage: $0 --clustertype=CLUSTER_TYPE -s BENCHMARK_SERVER -e RESULTS_DIR_PATH [-w WARMUPS] [-m MEASURES] [-i TOTAL_INST] [--iter=TOTAL_ITR] [-r= set redeploy to true] [-n NAMESPACE] [-g TFB_IMAGE] [--cpureq=CPU_REQ] [--memreq=MEM_REQ] [--cpulim=CPU_LIM] [--memlim=MEM_LIM] [-t THREAD] [-R REQUEST_RATE] [-d DURATION] [--connection=CONNECTIONS]"
-	exit -1
+    echo
+    echo "Usage: ./run_me.sh <RESULT_DIRECTORY_NAME> <HOSTER_CLUSTER_NS> <CPU_REQUEST> <MEMORY_REQUEST> <SERVICE_NAME>"
+    exit -1
 }
 
 function deploy_me() {
@@ -36,28 +38,41 @@ function deploy_me() {
 
     oc project ${NAMESPACE}
 
+    echo "################################################################################"
+    echo "                    Patching ${SERVICE_NAME} CPU & Memory                     "
+    echo "################################################################################"
+
+    #oc patch deployment ${SERVICE_NAME} --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
+    #oc wait --for=condition=Available=true deployments -n ${NAMESPACE} ${SERVICE_NAME}
 
     echo "################################################################################"
-    echo "                    Patching ${SERVICE_NAME}'s CPU & Memory                     "
+    echo "    Deploying the P75 Workloads with ${CPU_REQUESTS} & ${MEMORY_REQUESTS}       "
     echo "################################################################################"
 
-    oc patch deployment ${SERVICE_NAME} --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
-    oc wait --for=condition=Available=true deployments -n ${NAMESPACE} ${SERVICE_NAME}
+    pushd ../../e2e-benchmarking/workloads/kube-burner/ >/dev/null
 
-    echo "################################################################################"
-    echo " Deploying the P75 Workloads with ${CPU_REQUESTS} & ${MEMORY_REQUESTS}"
-    echo "################################################################################"
-    pushd e2e-benchmarking/workloads/kube-burner/ > /dev/null
-    WORKLOAD=cluster-density-ms ./run.sh
-    popd > /dev/null
+    # unset KUBECONFIG and remove the KUBECONFIG if any
+    unset KUBECONFIG
+    rm -rf kubeconfig* || true
 
+    # Extract KUBECONFIG from targetted HCP, update KUBECONFIG
+    oc extract secrets/admin-kubeconfig
+    export KUBECONFIG=$PWD/kubeconfig
+
+    # Run workload
+    WORKLOAD=cluster-density-ms HYPERSHIFT=false MGMT_CLUSTER_NAME=${MGMT_CLUSTER_NAME} HOSTED_CLUSTER_NS=${NAMESPACE} CLEANUP=true ./run.sh
+    popd >/dev/null
+
+    # unset KUBECONFIG
+    unset KUBECONFIG
+    
     # Run the utils/monitoring_metrics.csv file
     echo "################################################################################"
-    echo "Writing to csv file"
+    echo "                            Writing to csv file                                 "
     echo "################################################################################"
     ../utils/monitor-metrics-promql.sh 1 10m ${RESULTS_DIR_ROOT} ${SERVICE_NAME} ${SERVICE_NAME} ${NAMESPACE}
     # Check this logic
-    cp ../utils/output.csv ${RESULTS_DIR}/output.csv
+    #cp ../utils/output.csv ${RESULTS_DIR}/output.csv
 }
-
+export -f deploy_me usuage
 deploy_me
