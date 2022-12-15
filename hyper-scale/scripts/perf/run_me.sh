@@ -18,7 +18,7 @@ SERVICE_NAME=$5
 
 # Create(s) the results directory
 RESULTS_DIR_PATH=result
-rm -rf ${RESULTS_DIR_PATH}/hyperscale-* || true
+#rm -rf ${RESULTS_DIR_PATH}/hyperscale-* || true
 RESULTS_DIR_ROOT=${RESULTS_DIR_PATH}/hyperscale-$(date +%Y%m%d%H%M)
 mkdir -p ${RESULTS_DIR_ROOT} || true
 mkdir -p ${RESULTS_DIR} || true
@@ -42,8 +42,8 @@ function deploy_me() {
     echo "                    Patching ${SERVICE_NAME} CPU & Memory                     "
     echo "################################################################################"
 
-    #oc patch deployment ${SERVICE_NAME} --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
-    #oc wait --for=condition=Available=true deployments -n ${NAMESPACE} ${SERVICE_NAME}
+    oc patch deployment ${SERVICE_NAME} --type=strategic -p='{"spec":{"template":{"spec":{"containers":[{"name":"kube-apiserver","resources": {"requests":{"cpu":"'${CPU_REQUESTS}'m","memory":"'${MEMORY_REQUESTS}'M"}}}]}}}}'
+    oc wait --for=condition=available --timeout=600s deployments -n ${NAMESPACE} ${SERVICE_NAME}
 
     echo "################################################################################"
     echo "    Deploying the P75 Workloads with ${CPU_REQUESTS} & ${MEMORY_REQUESTS}       "

@@ -1,0 +1,2 @@
+start_timestamp,end_timestamp,cpu_request_avg_container,cpu_request_sum_container,cpu_usage_avg_container,cpu_usage_max_container,cpu_usage_min_container,cpu_throttle_avg_container,apiserver_request_rate
+Thu Dec  8 14:36:30 IST 2022,Thu Dec  8 14:41:39 IST 2022,"0.35","1.0499999999999998",,,,,null
