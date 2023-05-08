@@ -72,15 +72,12 @@ mc_90_cpu_container_data = mc_prom.custom_query(mc_90_cpu_container)
 mc_75_cpu_container = 'histogram_quantile(0.75, rate(kube_pod_container_resource_requests{namespace=~"ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001", resource="cpu", unit="core", pod=~"kube-apiserver-.*"}[30m]))'
 mc_75_cpu_container_data = mc_prom.custom_query(mc_75_cpu_container)
 
+# Average CPU Usuage
+mc_avg_cpu_pod = '(sum(irate(container_cpu_usage_seconds_total{openshift_cluster_name=~"${MGMT_CLUSTER_NAME}",name!="",container!="POD",namespace=~"${HOSTED_CLUSTER_NS}"}[2m]) * 100) by (pod, container, namespace, node, openshift_cluster_name)) > 0'
+
 ################################################################################################
 # HCP Metrics from HC_Prom
 ################################################################################################
-
-
-
-#hc_query_containerCPU_Workers = '(avg(irate(container_cpu_usage_seconds_total{name!="",container!="POD",namespace=~"openshift-(sdn|ovn-kubernetes|ingress)"}[2m]) * 100 and on (node) kube_node_role{role="worker"}) by (namespace, pod, container)) > 0' 
-#hc_data_containerCPU_Workers= hc_prom.custom_query(hc_query_containerCPU_Workers)
-#print(hc_data_containerCPU_Workers)
 
 
 
@@ -104,18 +101,28 @@ print(obo_mutatingAPICallsLatency_data)
 
 
 
-# Define the path to the CSV file
 # To-do:
 # Append the HCP Name, iteration name
 output_csv_file = 'final_output.csv'
 
+row_headers = [mc_max_mem_container_data, mc_min_mem_container_data, mc_95_cpu_container_data, 
+               mc_90_cpu_container_data, mc_75_cpu_container_data, obo_schedulingThroughput_data, 
+               obo_APIRequestRate_data, obo_mutatingAPICallsLatency_data]
+
+headers = ["mc_max_mem_container", "mc_min_mem_container", "mc_95_cpu_container", 
+               "mc_90_cpu_container", "mc_75_cpu_container", "obo_schedulingThroughput", 
+               "obo_APIRequestRate", "obo_mutatingAPICallsLatency"]
 
 # Save the results into a CSV file
-with open('output_csv_file', 'w', newline='') as csvfile:
+with open('output_csv_file', 'a', newline='') as csvfile:
     # Move to end of the file
+    print(" Move to end of file")
     csvfile.seek(0, 2)
-    print(" Moved to end of file")
-    # Dump the data now
+
+    # Write the Row Header details
+    output_file_writer = csv.writer(csvfile)
+    output_file_writer.writerow( headers )
+    output_file_writer.writerow( row_headers )
+    
     # Reset cursor to file starting and close the file
-    csvfile.seek(0)
     csvfile.close()
