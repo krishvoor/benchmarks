@@ -61,17 +61,17 @@ print(mc_min_mem_container_data)
 
 
 # P95 CPU
-mc_95_cpu_container = 'histogram_quantile(0.95, sum(rate(container_cpu_usage_seconds_total{namespace=~"ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", pod~="kube-apiserver-.*", container!="POD"}[30m])) by (pod, container, le))'
+mc_95_cpu_container = 'quantile_over_time(0.95, rate(container_cpu_usage_seconds_total{namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", container=~"kube-apiserver-.*"}[2m])[30m:])'
 mc_95_cpu_container_data = mc_prom.custom_query(mc_95_cpu_container)
 print(mc_95_cpu_container_data)
 
 # P90 CPU
-mc_90_cpu_container = 'histogram_quantile(0.90, sum(rate(container_cpu_usage_seconds_total{namespace=~"ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", pod~="kube-apiserver-.*", container!="POD"}[30m])) by (pod, container, le))'
+mc_90_cpu_container = 'quantile_over_time(0.90, rate(container_cpu_usage_seconds_total{namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", container=~"kube-apiserver-.*"}[2m])[30m:])'
 mc_90_cpu_container_data = mc_prom.custom_query(mc_90_cpu_container)
 print(mc_90_cpu_container_data)
 
 # P75 CPU
-mc_75_cpu_container = 'histogram_quantile(0.75, sum(rate(container_cpu_usage_seconds_total{namespace=~"ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", pod~="kube-apiserver-.*", container!="POD"}[30m])) by (pod, container, le))' 
+mc_75_cpu_container = 'quantile_over_time(0.75, rate(container_cpu_usage_seconds_total{namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", container=~"kube-apiserver-.*"}[2m])[30m:])'
 mc_75_cpu_container_data = mc_prom.custom_query(mc_75_cpu_container)
 print(mc_75_cpu_container_data)
 
