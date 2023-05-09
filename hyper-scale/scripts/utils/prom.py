@@ -14,9 +14,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Stage MC_PROM, OBO, HC_PROM URLs
 # This can be passed as arguments to the python script
 
-# Check if mc_prom.check_prometheus_connection() is True
-# Check if hc_prom.check_prometheus_connection() is True
-# Check if obo_prom.check_prometheus_connection() is True
+# Check if mc_prom.check_prometheus_connection() is True - flaky, fails after certain retries
+# Check if hc_prom.check_prometheus_connection() is True - flaky, fails after certain retries
+# Check if obo_prom.check_prometheus_connection() is True - Always works, 
 
 
 mc_prom_url = "https://prometheus-k8s-openshift-monitoring.apps.hs-mc-jbahnnsi0.0j7y.s1.devshift.org"
@@ -40,7 +40,7 @@ hc_prom = PrometheusConnect(url=hc_prom_url, headers=hc_header, disable_ssl=Fals
 
 
 # Variables to be used
-HCP_NAMESPACE = "ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001"
+HCP_NAMESPACE = "ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001"
 DEPLOYMENT_NAME = "openshift-apiserver"
 CONTAINER_NAME = "kube-apiserver"
 
@@ -50,30 +50,31 @@ CONTAINER_NAME = "kube-apiserver"
 ################################################################################################
 
 # MaxMemory
-mc_max_mem_container = 'max(max_over_time(container_memory_working_set_bytes{pod=~"kube-apiserver.*", namespace="ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001"}[2m]))'
+mc_max_mem_container = 'max(max_over_time(container_memory_working_set_bytes{pod=~"kube-apiserver.*", namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001"}[2m]))'
 mc_max_mem_container_data = mc_prom.custom_query(mc_max_mem_container)
 print(mc_max_mem_container_data)
 
 # MinMemory
-mc_min_mem_container = 'min(max_over_time(container_memory_working_set_bytes{pod=~"kube-apiserver.*", namespace="ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001"}[2m]))'
+mc_min_mem_container = 'min(max_over_time(container_memory_working_set_bytes{pod=~"kube-apiserver.*", namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001"}[2m]))'
 mc_min_mem_container_data = mc_prom.custom_query(mc_min_mem_container)
 print(mc_min_mem_container_data)
 
 
 # P95 CPU
-mc_95_cpu_container = 'histogram_quantile(0.95, rate(kube_pod_container_resource_requests{namespace=~"ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001", resource="cpu", unit="core", pod=~"kube-apiserver-.*"}[30m]))'
+mc_95_cpu_container = 'histogram_quantile(0.95, sum(rate(container_cpu_usage_seconds_total{namespace=~"ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", pod~="kube-apiserver-.*", container!="POD"}[30m])) by (pod, container, le))'
 mc_95_cpu_container_data = mc_prom.custom_query(mc_95_cpu_container)
+print(mc_95_cpu_container_data)
 
 # P90 CPU
-mc_90_cpu_container = 'histogram_quantile(0.90, rate(kube_pod_container_resource_requests{namespace=~"ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001", resource="cpu", unit="core", pod=~"kube-apiserver-.*"}[30m]))'
+mc_90_cpu_container = 'histogram_quantile(0.90, sum(rate(container_cpu_usage_seconds_total{namespace=~"ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", pod~="kube-apiserver-.*", container!="POD"}[30m])) by (pod, container, le))'
 mc_90_cpu_container_data = mc_prom.custom_query(mc_90_cpu_container)
+print(mc_90_cpu_container_data)
 
 # P75 CPU
-mc_75_cpu_container = 'histogram_quantile(0.75, rate(kube_pod_container_resource_requests{namespace=~"ocm-staging-23fd33s6u5dr56rbvivaciovsthu9qdm-kruiz-rrl-0001", resource="cpu", unit="core", pod=~"kube-apiserver-.*"}[30m]))'
+mc_75_cpu_container = 'histogram_quantile(0.75, sum(rate(container_cpu_usage_seconds_total{namespace=~"ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", pod~="kube-apiserver-.*", container!="POD"}[30m])) by (pod, container, le))' 
 mc_75_cpu_container_data = mc_prom.custom_query(mc_75_cpu_container)
+print(mc_75_cpu_container_data)
 
-# Average CPU Usuage
-mc_avg_cpu_pod = '(sum(irate(container_cpu_usage_seconds_total{openshift_cluster_name=~"${MGMT_CLUSTER_NAME}",name!="",container!="POD",namespace=~"${HOSTED_CLUSTER_NS}"}[2m]) * 100) by (pod, container, namespace, node, openshift_cluster_name)) > 0'
 
 ################################################################################################
 # HCP Metrics from HC_Prom
