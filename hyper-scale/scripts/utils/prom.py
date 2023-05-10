@@ -1,48 +1,64 @@
-from datetime import datetime, timedelta
 from prometheus_api_client import PrometheusConnect
 import csv
 import urllib3
+import argparse
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-# Enhancements
-# 1) Supply OBO, MC_PROM, HC_PROM via
-# https://docs.python.org/3/library/argparse.html
-# 2) Maintain files for metric endpoint & TOKENS
+# Creating the Parser Object
+parser = argparse.ArgumentParser(description="Process metrics from MC/OBO/HC and consolidate to a csv file")
 
-# Prefix o/p csv file name w/ HCP name
-# Stage MC_PROM, OBO, HC_PROM URLs
-# This can be passed as arguments to the python script
+# Adding the argumets
+parser.add_argument('--mc_prom_url',
+                    help='Supply the MC Prom URL')
 
-# Check if mc_prom.check_prometheus_connection() is True - flaky, fails after certain retries
-# Check if hc_prom.check_prometheus_connection() is True - flaky, fails after certain retries
-# Check if obo_prom.check_prometheus_connection() is True - Always works, 
+parser.add_argument('--obo_prom_url',
+                    help="Supply the OBO Prom URL")
+
+parser.add_argument('--hc_prom_url',
+                    help="Supply the HC Prom URL")
+
+parser.add_argument('--mc_bearer_token',
+                    help='Supply the MC Bearer Token')
+
+parser.add_argument('--hc_bearer_token',
+                    help='Supply the HC Bearer Token')
+
+parser.add_argument('--hcp_namespace',
+                    help='Supply the HCP Namespace')
+
+parser.add_argument('--deployment_name',
+                    help="Supply the Deployment name")
+
+parser.add_argument('--container_name',
+                    help="Supply the Container name")
+
+# Assign them as attributes
+args = parser.parse_args()
 
 
+mc_prom_header = f'{{"Authorization": "Bearer {args.mc_bearer_token}"}}'
+obo_prom_header = f'{{"Authorization": "Bearer {args.mc_bearer_token}"}}'
+hc_prom_header = f'{{"Authorization": "Bearer {args.hc_bearer_token}"}}'
+
+HCP_NAMESPACE = f'{args.hcp_namespace}'
+DEPLOYMENT_NAME = f'{args.deployment_name}'
+CONTAINER_NAME = f'{args.container_name}' 
+
+'''
 mc_prom_url = "https://prometheus-k8s-openshift-monitoring.apps.hs-mc-jbahnnsi0.0j7y.s1.devshift.org"
 obo_prom_url = "http://prometheus-hypershift-openshift-observability-operator.apps.hs-mc-jbahnnsi0.0j7y.s1.devshift.org"
 hc_prom_url = "https://prometheus-k8s-openshift-monitoring.apps.rosa.kruiz-rrl-0001.6bzt.s3.devshift.org"
-
-# Stage MC_BEARER, OBO_BEARER, HC_BEARER
-mc_prom_header = {"Authorization": "Bearer <UPDATE_ME>"}
-obo_header = mc_prom_header
-hc_header = {"Authorization": "Bearer <UPDATE_ME>"}
-
+'''
 
 # Connect to MC_PROM
-mc_prom = PrometheusConnect(url=mc_prom_url, headers=mc_prom_header, disable_ssl=True)
+mc_prom = PrometheusConnect(url=f'{args.mc_prom_url}', headers=mc_prom_header, disable_ssl=True)
 
 # Connect to OBO
-obo_prom = PrometheusConnect(url=obo_prom_url, headers=obo_header, disable_ssl=False)
+obo_prom = PrometheusConnect(url=f'{args.obo_prom_url}', headers=obo_prom_header, disable_ssl=False)
 
 # Connect to HC_PROM
-hc_prom = PrometheusConnect(url=hc_prom_url, headers=hc_header, disable_ssl=False)
-
-
-# Variables to be used
-HCP_NAMESPACE = "ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001"
-DEPLOYMENT_NAME = "openshift-apiserver"
-CONTAINER_NAME = "kube-apiserver"
+hc_prom = PrometheusConnect(url=f'{args.hc_prom_url}', headers=hc_prom_header, disable_ssl=False)
 
 
 ################################################################################################
