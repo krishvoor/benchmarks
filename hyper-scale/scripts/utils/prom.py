@@ -117,7 +117,6 @@ headers = ["mc_max_mem_container", "mc_min_mem_container", "mc_95_cpu_container"
 
 # Save the results into a CSV file
 with open('output_csv_file', 'a', newline='') as csvfile:
-    # Move to end of the file
     print(" Move to end of file")
     csvfile.seek(0, 2)
 
