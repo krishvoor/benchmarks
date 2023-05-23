@@ -6,7 +6,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 # Creating the Parser Object
-parser = argparse.ArgumentParser(description="Process metrics from MC/OBO/HC and consolidate to a csv file")
+parser = argparse.ArgumentParser(description="Collect Prom metrics from MC/ OBO/ HC and consolidate to a csv file")
 
 # Adding the argumets
 parser.add_argument('--mc_prom_url',
@@ -45,11 +45,6 @@ HCP_NAMESPACE = f'{args.hcp_namespace}'
 DEPLOYMENT_NAME = f'{args.deployment_name}'
 CONTAINER_NAME = f'{args.container_name}' 
 
-'''
-mc_prom_url = "https://prometheus-k8s-openshift-monitoring.apps.hs-mc-jbahnnsi0.0j7y.s1.devshift.org"
-obo_prom_url = "http://prometheus-hypershift-openshift-observability-operator.apps.hs-mc-jbahnnsi0.0j7y.s1.devshift.org"
-hc_prom_url = "https://prometheus-k8s-openshift-monitoring.apps.rosa.kruiz-rrl-0001.6bzt.s3.devshift.org"
-'''
 
 # Connect to MC_PROM
 mc_prom = PrometheusConnect(url=f'{args.mc_prom_url}', headers=mc_prom_header, disable_ssl=True)
@@ -66,60 +61,50 @@ hc_prom = PrometheusConnect(url=f'{args.hc_prom_url}', headers=hc_prom_header, d
 ################################################################################################
 
 # MaxMemory
-mc_max_mem_container = 'max(max_over_time(container_memory_working_set_bytes{pod=~"kube-apiserver.*", namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001"}[2m]))'
+mc_max_mem_container = f'max(max_over_time(container_memory_working_set_bytes{{namespace=~"{HCP_NAMESPACE}", pod=~"{CONTAINER_NAME}.*"}}[2m]))'
 mc_max_mem_container_data = mc_prom.custom_query(mc_max_mem_container)
 print(mc_max_mem_container_data)
 
 # MinMemory
-mc_min_mem_container = 'min(max_over_time(container_memory_working_set_bytes{pod=~"kube-apiserver.*", namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001"}[2m]))'
+mc_min_mem_container = f'min(max_over_time(container_memory_working_set_bytes{{namespace=~"{HCP_NAMESPACE}", pod=~"{CONTAINER_NAME}.*"}}[2m]))'
 mc_min_mem_container_data = mc_prom.custom_query(mc_min_mem_container)
 print(mc_min_mem_container_data)
 
 
 # P95 CPU
-mc_95_cpu_container = 'quantile_over_time(0.95, rate(container_cpu_usage_seconds_total{namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", container=~"kube-apiserver-.*"}[2m])[30m:])'
+mc_95_cpu_container = f'quantile_over_time(0.95, rate(container_cpu_usage_seconds_total{{namespace=~"{HCP_NAMESPACE}", container=~"{CONTAINER_NAME}.*"}}[2m])[30m:])'
 mc_95_cpu_container_data = mc_prom.custom_query(mc_95_cpu_container)
 print(mc_95_cpu_container_data)
 
 # P90 CPU
-mc_90_cpu_container = 'quantile_over_time(0.90, rate(container_cpu_usage_seconds_total{namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", container=~"kube-apiserver-.*"}[2m])[30m:])'
+mc_90_cpu_container = f'quantile_over_time(0.90, rate(container_cpu_usage_seconds_total{{namespace=~"{HCP_NAMESPACE}", container=~"{CONTAINER_NAME}.*"}}[2m])[30m:])'
 mc_90_cpu_container_data = mc_prom.custom_query(mc_90_cpu_container)
 print(mc_90_cpu_container_data)
 
 # P75 CPU
-mc_75_cpu_container = 'quantile_over_time(0.75, rate(container_cpu_usage_seconds_total{namespace="ocm-staging-23j762ttg756ri9cqb4vt5nu4c2r5s5o-kruiz-p6w-0001", container=~"kube-apiserver-.*"}[2m])[30m:])'
+mc_75_cpu_container = f'quantile_over_time(0.75, rate(container_cpu_usage_seconds_total{{namespace=~"{HCP_NAMESPACE}", container=~"{CONTAINER_NAME}.*"}}[2m])[30m:])'
 mc_75_cpu_container_data = mc_prom.custom_query(mc_75_cpu_container)
 print(mc_75_cpu_container_data)
-
-
-################################################################################################
-# HCP Metrics from HC_Prom
-################################################################################################
-
 
 
 ################################################################################################
 # OBO Metrics from OBO_Prom
 ################################################################################################
 
-# Needs formatting
-obo_schedulingThroughput = 'irate(apiserver_request_total {{namespace=~"{}", verb="POST", resource="pods", subresource="binding", code="201"}}[2m]) > 0'.format(HCP_NAMESPACE)
+obo_schedulingThroughput = f'irate(apiserver_request_total {{namespace=~"{HCP_NAMESPACE}", verb="POST", resource="pods", subresource="binding", code="201"}}[2m]) > 0'
 obo_schedulingThroughput_data = obo_prom.custom_query(obo_schedulingThroughput)
 print(obo_schedulingThroughput_data)
 
 
-obo_APIRequestRate = ' sum ( irate ( apiserver_request_total {namespace=~"HCP_NAMESPACE}", job="kube-apiserver",verb!="WATCH"}[2m]) ) by ( verb, resource, instance) > 0 '
+obo_APIRequestRate = f' sum ( irate ( apiserver_request_total {{namespace=~"{HCP_NAMESPACE}", job="kube-apiserver",verb!="WATCH"}}[2m]) ) by ( verb, resource, instance) > 0 '
 obo_APIRequestRate_data = obo_prom.custom_query(obo_APIRequestRate)
 print(obo_APIRequestRate_data)
 
-obo_mutatingAPICallsLatency = ' histogram_quantile (0.99, sum ( irate ( apiserver_request_duration_seconds_bucket{namespace=~"HCP_NAMESPACE", job="kube-apiserver", verb=~"POST|PUT|DELETE|PATCH", subresource!~"log|exec|portforward|attach|proxy"}[2m])) by ( le, resource, verb, scope)) > 0'
+obo_mutatingAPICallsLatency = f' histogram_quantile (0.99, sum ( irate ( apiserver_request_duration_seconds_bucket{{namespace=~"{HCP_NAMESPACE}", job="kube-apiserver", verb=~"POST|PUT|DELETE|PATCH", subresource!~"log|exec|portforward|attach|proxy"}}[2m])) by ( le, resource, verb, scope)) > 0'
 obo_mutatingAPICallsLatency_data = obo_prom.custom_query(obo_mutatingAPICallsLatency)
 print(obo_mutatingAPICallsLatency_data)
 
 
-
-# To-do:
-# Append the HCP Name, iteration name
 output_csv_file = 'final_output.csv'
 
 row_headers = [mc_max_mem_container_data, mc_min_mem_container_data, mc_95_cpu_container_data, 
