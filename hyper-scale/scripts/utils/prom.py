@@ -63,11 +63,13 @@ hc_prom = PrometheusConnect(url=f'{args.hc_prom_url}', headers=hc_prom_header, d
 # MaxMemory
 mc_max_mem_container = f'max(max_over_time(container_memory_working_set_bytes{{namespace=~"{HCP_NAMESPACE}", pod=~"{CONTAINER_NAME}.*"}}[2m]))'
 mc_max_mem_container_data = mc_prom.custom_query(mc_max_mem_container)
+mc_max_mem_container_data = mc_max_mem_container_data[0]['value'][1]
 print(mc_max_mem_container_data)
 
 # MinMemory
 mc_min_mem_container = f'min(max_over_time(container_memory_working_set_bytes{{namespace=~"{HCP_NAMESPACE}", pod=~"{CONTAINER_NAME}.*"}}[2m]))'
 mc_min_mem_container_data = mc_prom.custom_query(mc_min_mem_container)
+mc_max_mem_container_data = mc_max_mem_container_data[0]['value'][1]
 print(mc_min_mem_container_data)
 
 
@@ -93,15 +95,18 @@ print(mc_75_cpu_container_data)
 
 obo_schedulingThroughput = f'irate(apiserver_request_total {{namespace=~"{HCP_NAMESPACE}", verb="POST", resource="pods", subresource="binding", code="201"}}[2m]) > 0'
 obo_schedulingThroughput_data = obo_prom.custom_query(obo_schedulingThroughput)
+obo_schedulingThroughput_data = obo_schedulingThroughput_data[0]['value'][1]
 print(obo_schedulingThroughput_data)
 
 
 obo_APIRequestRate = f' sum ( irate ( apiserver_request_total {{namespace=~"{HCP_NAMESPACE}", job="kube-apiserver",verb!="WATCH"}}[2m]) ) by ( verb, resource, instance) > 0 '
 obo_APIRequestRate_data = obo_prom.custom_query(obo_APIRequestRate)
+obo_APIRequestRate_data = obo_APIRequestRate_data[0]['value'][1]
 print(obo_APIRequestRate_data)
 
 obo_mutatingAPICallsLatency = f' histogram_quantile (0.99, sum ( irate ( apiserver_request_duration_seconds_bucket{{namespace=~"{HCP_NAMESPACE}", job="kube-apiserver", verb=~"POST|PUT|DELETE|PATCH", subresource!~"log|exec|portforward|attach|proxy"}}[2m])) by ( le, resource, verb, scope)) > 0'
 obo_mutatingAPICallsLatency_data = obo_prom.custom_query(obo_mutatingAPICallsLatency)
+obo_mutatingAPICallsLatency_data = obo_mutatingAPICallsLatency_data[0]['value'][1]
 print(obo_mutatingAPICallsLatency_data)
 
 
