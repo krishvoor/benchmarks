@@ -47,7 +47,7 @@ metadata:
   labels:
     app: tfb-qrh-app
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - port: 8080
       targetPort: 8080
